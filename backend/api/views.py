@@ -13,9 +13,9 @@ def api_home(request, *args, **kwargs):
 
 
     serializer = ProductSerializer(data=request.data)
-    if serializer.is_valid():
-        data = serializer.data
-        print(data)
-        return Response(data)
-    else:
-        return Response("Error")
+    if serializer.is_valid(raise_exception=True):
+        #instance = serializer.save()
+        print(serializer.data)
+        return Response(serializer.data)
+
+    return Response({"Invalid": "your data is not valid"}, status=400)
