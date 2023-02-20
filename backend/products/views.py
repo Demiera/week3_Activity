@@ -1,70 +1,83 @@
-from rest_framework import authentication, generics, mixins, permissions
+from rest_framework import generics, mixins
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from django.shortcuts import get_object_or_404
 
-from api.authentication import TokenAuthentication
-
+from api.mixins import StaffEditorPermissionMixin, UserQuerySetMixin
 from .models import Product
 from .serializers import ProductSerializer
-from .permissions import IsStaffEditorPermission
 
 
-class ProductListCreateAPIView(generics.ListCreateAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-    authentication_classes = [
-        authentication.SessionAuthentication,
-        TokenAuthentication
-    ]
-    permission_classes = [permissions.IsAdminUser, IsStaffEditorPermission]
 
-    def perform_create(self, serializer):
-        # serializer.save(user=self.request.user)
-        title = serializer.validated_data.get('title')
-        content = serializer.validated_data.get('content') or None
-        if content is None:
-            content = title
-        serializer.save(content=content)
-class ProductDetailAPIView(generics.RetrieveAPIView):
-    authentication_classes = [
-        authentication.SessionAuthentication,
-        TokenAuthentication
-    ]
-    permission_classes = [permissions.IsAdminUser, IsStaffEditorPermission]
+class ProductListCreateAPIView(
+    UserQuerySetMixin,
+    StaffEditorPermissionMixin,
+    generics.ListCreateAPIView
+):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
+    # def perform_create(self, serializer):
+    #     # serializer.save(user=self.request.user)
+    #     # email = serializer.validated_data.pop('email')
+    #     title = serializer.validated_data.get('title')
+    #     content = serializer.validated_data.get('content') or None
+    #     if content is None:
+    #         content = title
+    #     serializer.save(user=self.request.user, content=content)
 
-class ProductUpdateAPIView(generics.UpdateAPIView):
-    authentication_classes = [
-        authentication.SessionAuthentication,
-        TokenAuthentication
-    ]
-    permission_classes = [permissions.IsAdminUser, IsStaffEditorPermission]
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset(*args, **kwargs)
+        request = self.request
+        user = request.user
+
+        if not user.is_authenticated:
+            return Product.objects.none()
+        if user.is_superuser:
+            return qs
+
+        print(request.user)
+        return qs.filter(user=request.user)
+
+class ProductDetailAPIView(
+    UserQuerySetMixin,
+    StaffEditorPermissionMixin,
+    generics.RetrieveAPIView
+):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
+
+class ProductUpdateAPIView(
+    UserQuerySetMixin,
+    StaffEditorPermissionMixin,
+    generics.RetrieveUpdateAPIView
+):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     lookup_field = 'pk'
 
     def perform_update(self, serializer):
-        instance = serializer.save()
+        if self.request.user.is_superuser:
+            instance = serializer.save()
+        elif self.request.user == Product.user:
+            instance = serializer.save()
 
-
-class ProductDeleteAPIView(generics.DestroyAPIView):
-    authentication_classes = [
-        authentication.SessionAuthentication,
-        TokenAuthentication
-    ]
-    permission_classes = [permissions.IsAdminUser, IsStaffEditorPermission]
+class ProductDeleteAPIView(
+    UserQuerySetMixin,
+    StaffEditorPermissionMixin,
+    generics.RetrieveDestroyAPIView
+):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     lookup_field = 'pk'
 
     def perform_destroy(self, instance):
-
-        super().perform_destroy(instance)
-
+        if self.request.user.is_superuser:
+            super().perform_destroy(instance)
+        elif self.request.user == Product.user:
+            super().perform_destroy(instance)
 
 
 
