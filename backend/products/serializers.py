@@ -25,6 +25,7 @@ class ProductSerializer(serializers.ModelSerializer):
     )
     # email = serializers.EmailField(write_only=True)
     title = serializers.CharField(validators=[validate_no_hello, unique_product_title])
+
     class Meta:
         model = Product
         fields = [
@@ -42,17 +43,17 @@ class ProductSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
-        #custom validation
+        # custom validation
         return attrs
+
     # def get_my_user_data(self, obj):
-        # return {'username': obj.user.username}
+    # return {'username': obj.user.username}
 
     # def validate_title(self, value):
     #     qs = Product.objects.filter(title__iexact=value)
     #     if qs.exists():
     #         raise serializers.ValidationError(f"{value} is already taken")
     #     return value
-
 
     # def create(self, validate_data):
     #     obj = super().create(validate_data)
@@ -64,9 +65,7 @@ class ProductSerializer(serializers.ModelSerializer):
         if request is None:
             return None
 
-
         return reverse("product-edit", kwargs={'pk': obj.pk}, request=request)
-
 
     def get_my_discount(self, obj):
         if not hasattr(obj, 'id'):

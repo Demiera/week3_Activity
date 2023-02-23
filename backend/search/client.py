@@ -8,14 +8,11 @@ def get_index(index_name='admin_Product'):
     index = client.init_index(index_name)
     return index
 
-def perform_search(query, **kwargs):
-    """
-    perform_search('hello', tags=['hazil'], public=True)
-    """
-    index = get_index()
-    tags = ""
-    params = {}
 
+def perform_search(query, **kwargs):
+    index = get_index()
+    params = {}
+    tags = ""
     if 'tags' in kwargs:
         tags = kwargs.pop('tags') or []
         if len(tags) != 0:

@@ -34,8 +34,8 @@ class ProductListCreateAPIView(
 
         if not user.is_authenticated:
             return Product.objects.none()
-        if user.is_superuser:
-            return qs
+        # if user.is_superuser:
+        #     return qs
 
         print(request.user)
         return qs.filter(user=request.user)
